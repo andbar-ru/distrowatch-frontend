@@ -19,5 +19,6 @@ module.exports = {
     'quotes': 0, // дело вкуса, какие кавычки использовать в строках
     'quote-props': 0, // дело вкуса, окавычивать ли имена свойств в объектах
     'comma-dangle': ['error', 'always-multiline'], // последний элемент в многострочных перечислениях заканчивать запятой
+    'no-multiple-empty-lines': ['error', { max: 2, maxEOF: 0 }]
   }
 }

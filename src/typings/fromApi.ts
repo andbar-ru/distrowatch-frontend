@@ -1,14 +1,18 @@
 import { Static, Record, String as S, Number as N } from 'runtypes'
 
+
 const PositiveIntNumber = N.withConstraint(n => (Number.isInteger(n) && n > 0) || `${n} is not positive integer`)
 const DateString = S.withConstraint(s => !isNaN(new Date(s).valueOf()) || `${s} is not a date or invalid date`)
+
 
 export const DistrRecord = Record({
   name: S,
   count: PositiveIntNumber,
   lastUpdate: DateString,
 }).asReadonly()
+
 type Distr = Static<typeof DistrRecord>
+
 
 export class MyDistr {
   readonly name: string
@@ -34,3 +38,13 @@ export class MyDistr {
     return this.lastUpdate.toISOString().split('T')[0]
   }
 }
+
+
+export const CoordsRecord = Record({
+  latitude: N,
+  longitude: N,
+  latitudeDiff: N,
+  longitudeDiff: N,
+}).asReadonly()
+
+export type Coords = Static<typeof CoordsRecord>

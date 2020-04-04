@@ -7,6 +7,7 @@
       </ul>
     </template>
     <p v-if="coords">Coordinates: {{ coords.latitude }} ({{ coords.latitudeDiff > 0 ? '+' : '' }}{{ coords.latitudeDiff }}), {{ coords.longitude }} ({{ coords.longitudeDiff > 0 ? '+' : '' }}{{ coords.longitudeDiff }})</p>
+    <p v-if="averageColor">Average color of the newest distr image: {{ averageColor }}</p>
     <table v-if="distrs.length > 0">
       <thead>
         <tr>
@@ -36,8 +37,8 @@ import { Array } from 'runtypes'
 
 import config from '@/config.json'
 import '@/assets/common.css'
-import { DistrRecord, MyDistr } from '@/typings/distr.ts'
-import { Coords, CoordsRecord } from '@/typings/coords.ts'
+import { DistrRecord, MyDistr, CoordsRecord, Coords } from '@/typings/fromApi'
+
 
 const DistrRecords = Array(DistrRecord)
 
@@ -53,11 +54,13 @@ export default Vue.extend({
     fetchErrors: FetchError[];
     distrs: MyDistr[];
     coords: Coords | undefined;
+    averageColor: string;
     } {
     return {
       fetchErrors: [],
       distrs: [],
       coords: undefined,
+      averageColor: '',
     }
   },
 
@@ -65,6 +68,7 @@ export default Vue.extend({
     this.fetchErrors = []
     this.fetchDistrs()
     this.fetchCoords()
+    this.fetchAverageColor()
   },
 
   methods: {
@@ -90,7 +94,6 @@ export default Vue.extend({
     /** Fetch data about coordinates. */
     async fetchCoords() {
       const url = `${config.apiUrl}/coords?columns=latitude,longitude,latitude_diff,longitude_diff,latitude_trend,longitude_trend&orderBy=date+desc&limit=1`
-      console.log(url)
       fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -105,6 +108,26 @@ export default Vue.extend({
             longitudeDiff: data.longitude_diff * data.longitude_trend,
           })
           this.coords = coords
+        })
+        .catch(err => {
+          console.error(err)
+          this.fetchErrors.push({
+            url: url,
+            message: err.message,
+          })
+        })
+    },
+
+    /** Fetch average color of the last distr image. */
+    async fetchAverageColor() {
+      const url = `${config.apiUrl}/average-color`
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          if (!(typeof data === 'string')) {
+            throw new Error(`Expected string, got ${data}`)
+          }
+          this.averageColor = data
         })
         .catch(err => {
           console.error(err)
