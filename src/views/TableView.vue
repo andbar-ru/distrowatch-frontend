@@ -1,6 +1,12 @@
 <template>
   <article>
-    <p v-if="fetchError" class="error">Error occurred while requesting distrs: {{ fetchError }}.</p>
+    <template v-if="fetchErrors.length">
+      <p class="error">Fetch errors:</p>
+      <ul class="error">
+        <li v-for="error in fetchErrors" :key="error.url">{{ error.url }}: {{ error.message }}</li>
+      </ul>
+    </template>
+    <p v-if="coords">Coordinates: {{ coords.latitude }} ({{ coords.latitudeDiff > 0 ? '+' : '' }}{{ coords.latitudeDiff }}), {{ coords.longitude }} ({{ coords.longitudeDiff > 0 ? '+' : '' }}{{ coords.longitudeDiff }})</p>
     <table v-if="distrs.length > 0">
       <thead>
         <tr>
@@ -28,39 +34,87 @@
 import Vue from 'vue'
 import { Array } from 'runtypes'
 
+import config from '@/config.json'
 import '@/assets/common.css'
-import { DistrRecord, MyDistr } from '@/typings/distr'
+import { DistrRecord, MyDistr } from '@/typings/distr.ts'
+import { Coords, CoordsRecord } from '@/typings/coords.ts'
 
 const DistrRecords = Array(DistrRecord)
+
+interface FetchError {
+  url: string;
+  message: string;
+}
 
 export default Vue.extend({
   name: 'TableView',
 
   data(): {
-    fetchError: string;
+    fetchErrors: FetchError[];
     distrs: MyDistr[];
+    coords: Coords | undefined;
     } {
     return {
-      fetchError: '',
+      fetchErrors: [],
       distrs: [],
+      coords: undefined,
     }
   },
 
   mounted() {
-    fetch('http://localhost:5000/distrs?orderBy=count+desc,last_update')
-      .then(response => response.json())
-      .then(data => {
-        const distrs = DistrRecords.check(data)
-        this.distrs = distrs.map(distr => new MyDistr(distr))
-        this.setOtherProperties()
-      })
-      .catch(err => {
-        console.error(err)
-        this.fetchError = err.message
-      })
+    this.fetchErrors = []
+    this.fetchDistrs()
+    this.fetchCoords()
   },
 
   methods: {
+    /** Fetch data about distrs. */
+    async fetchDistrs() {
+      const url = `${config.apiUrl}/distrs?orderBy=count+desc,last_update`
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          const distrs = DistrRecords.check(data)
+          this.distrs = distrs.map(distr => new MyDistr(distr))
+          this.setOtherProperties()
+        })
+        .catch(err => {
+          console.error(err)
+          this.fetchErrors.push({
+            url: url,
+            message: err.message,
+          })
+        })
+    },
+
+    /** Fetch data about coordinates. */
+    async fetchCoords() {
+      const url = `${config.apiUrl}/coords?columns=latitude,longitude,latitude_diff,longitude_diff,latitude_trend,longitude_trend&orderBy=date+desc&limit=1`
+      console.log(url)
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          if (data.length === 0) {
+            throw new Error('Coords is empty array')
+          }
+          data = data[0]
+          const coords = CoordsRecord.check({
+            latitude: data.latitude,
+            longitude: data.longitude,
+            latitudeDiff: data.latitude_diff * data.latitude_trend,
+            longitudeDiff: data.longitude_diff * data.longitude_trend,
+          })
+          this.coords = coords
+        })
+        .catch(err => {
+          console.error(err)
+          this.fetchErrors.push({
+            url: url,
+            message: err.message,
+          })
+        })
+    },
+
     /**
      * Set other properties of distrs: leader, newest updated, oldest updated.
      * We go from the end searching point where count difference between adjacent distrs greater
