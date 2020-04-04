@@ -8,12 +8,12 @@ const routes = [
   {
     path: '/',
     name: 'TableView',
-    component: TableView
-  }
+    component: TableView,
+  },
 ]
 
 const router = new VueRouter({
-  routes
+  routes,
 })
 
 export default router

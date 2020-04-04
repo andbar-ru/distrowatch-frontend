@@ -13,6 +13,11 @@ module.exports = {
   },
   rules: {
     'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
-    'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
+    'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+    // Переопределения правил
+    'space-before-function-paren': ['error', 'never'],
+    'quotes': 0, // дело вкуса, какие кавычки использовать в строках
+    'quote-props': 0, // дело вкуса, окавычивать ли имена свойств в объектах
+    'comma-dangle': ['error', 'always-multiline'], // последний элемент в многострочных перечислениях заканчивать запятой
   }
 }
