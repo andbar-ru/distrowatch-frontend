@@ -152,9 +152,8 @@ export default Vue.extend({
       let leader = false
       const oldest = { index: 0, lastUpdate: this.distrs[0].lastUpdate }
       const newest = { index: 0, lastUpdate: this.distrs[0].lastUpdate }
-      let i = this.distrs.length - 1
 
-      for (i; i--;) {
+      for (let i = this.distrs.length; i--;) {
         const distr = this.distrs[i]
 
         if (distr.lastUpdate < oldest.lastUpdate) {
