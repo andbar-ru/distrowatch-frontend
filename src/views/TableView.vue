@@ -168,7 +168,7 @@ export default Vue.extend({
 
         if (i > 0) {
           const prevDistr = this.distrs[i - 1]
-          if ((prevDistr.count - distr.count) > threshold) {
+          if ((prevDistr.count - distr.count) >= threshold) {
             leader = true
           }
           if (leader) {
