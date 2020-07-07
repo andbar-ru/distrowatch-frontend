@@ -8,6 +8,10 @@
     </template>
     <p v-if="coords">Coordinates: {{ coords.latitude }} ({{ coords.latitudeDiff > 0 ? '+' : '' }}{{ coords.latitudeDiff }}), {{ coords.longitude }} ({{ coords.longitudeDiff > 0 ? '+' : '' }}{{ coords.longitudeDiff }})</p>
     <p v-if="averageColor">Average color of the newest distr image: {{ averageColor }}</p>
+    <div class="form">
+      <input v-model="includeDropouts" id="includeDropouts" type="checkbox" />
+      <label for="includeDropouts">include dropouts</label>
+    </div>
     <table v-if="distrs.length > 0">
       <thead>
         <tr>
@@ -55,26 +59,37 @@ export default Vue.extend({
     distrs: MyDistr[];
     coords: Coords | undefined;
     averageColor: string;
+    includeDropouts: boolean;
     } {
     return {
       fetchErrors: [],
       distrs: [],
       coords: undefined,
       averageColor: '',
+      includeDropouts: false,
     }
   },
 
   mounted() {
     this.fetchErrors = []
-    this.fetchDistrs()
+    this.fetchDistrs(this.includeDropouts)
     this.fetchCoords()
     this.fetchAverageColor()
   },
 
+  watch: {
+    includeDropouts() {
+      this.fetchDistrs(this.includeDropouts)
+    },
+  },
+
   methods: {
     /** Fetch data about distrs. */
-    async fetchDistrs() {
-      const url = `${config.apiUrl}/distrs?orderBy=count+desc,last_update`
+    async fetchDistrs(includeDropouts: boolean) {
+      let url = `${config.apiUrl}/distrs?orderBy=count+desc,last_update`
+      if (includeDropouts) {
+        url += '&dropout=true'
+      }
       fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -187,6 +202,7 @@ export default Vue.extend({
 <style>
 table {
   border-collapse: collapse;
+  margin-top: 10px;
 }
 
 td, th {
