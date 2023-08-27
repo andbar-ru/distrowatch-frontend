@@ -20,6 +20,7 @@
     <div class="form">
       <input v-model="includeDropouts" id="includeDropouts" type="checkbox" />
       <label for="includeDropouts">include dropouts</label>
+
       <input v-model="last365" id="last365" type="checkbox" />
       <label for="last365">last 365</label>
     </div>
@@ -66,15 +67,27 @@ interface FetchError {
 export default class App extends Vue {
   /* --- DATA --- */
 
+  /** Errors happening while fetching info about distrs */
   private fetchErrors: FetchError[] = [];
+
+  /** Info about distrs */
   private distrs: MyDistr[] = [];
+
+  /** Last coordinates */
   private coords: Coords | null = null;
+
+  /** Average color of the last updated distr's image */
   private averageColor = "";
+
+  /** Fetch all available info about distrs, including dropout */
   private includeDropouts = false;
+
+  /** Fetch only last 365 entries about distrs, roughly for the last year */
   private last365 = false;
 
   /* --- WATCHERS --- */
 
+  /** Watches "includeDropout" and refetches distrs on its change. */
   @Watch("includeDropouts")
   private onIncludeDropoutsChange(value: App["includeDropouts"]) {
     if (value) {
@@ -83,6 +96,7 @@ export default class App extends Vue {
     this.fetchDistrs();
   }
 
+  /** Watches "last365" and refetches distrs on its change. */
   @Watch("last365")
   private onLast365Change(value: App["last365"]) {
     if (value) {
@@ -96,7 +110,9 @@ export default class App extends Vue {
   /** Fetches data about distrs */
   private async fetchDistrs() {
     let url = `${config.apiUrl}/distrs?orderBy=count+desc,last_update`;
-    if (this.includeDropouts) {
+    if (this.last365) {
+      url += "&last365=true";
+    } else if (this.includeDropouts) {
       url += "&dropout=true";
     }
     fetch(url)
@@ -145,7 +161,7 @@ export default class App extends Vue {
 
       if (i > 0) {
         const prevDistr = this.distrs[i - 1];
-        if (prevDistr.count - distr.count >= threshold) {
+        if (prevDistr.count - distr.count > threshold) {
           leader = true;
         }
         if (leader) {
